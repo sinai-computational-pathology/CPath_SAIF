@@ -20,11 +20,11 @@ The multisite dataset used in this project is currently private due to instituti
 ### Inclusion Criteria
 
 Slides included in this study meet the following criteria:
-- Digitized dermatopathology slides from multiple sites
-- Racially diverse patient population
-- Sufficient tissue quality and coverage
-- Availability of self-reported race and relevant clinical metadata
-- Consent for research use
+
+- Digitized dermatopathology slides within the Mount Sinai Health System (MSHS)
+- Available self-reported race in patient level
+
+-To prevent data leakage, slides from the same patient are not assigned to both training and validation folds.
 
 **Summary of the skin dataset by self-reported race compared with Mount Sinai healthcare system, New York City population, and public source (TCGA).**
 
@@ -37,32 +37,41 @@ Slides included in this study meet the following criteria:
 | Other              | 543 (10.3%)      | 9.3          | 6.4                         | 4.5                | 1.8      |
 | **Total Number**   | 5,266            | 2,471        | 114,947                     | 8M                 | 23,276   |
 
-## Workflow Overview
+### Patient Ratio and Total Number by Experiment
 
-### Experiment 1: Baseline Race Prediction
+| Experiment | Patients Ratio (%) | Total Number of Patients | White (%) | Black (%) | Hispanic/Latino (%) | Asian (%) | Other (%) |
+|------------|-------------------|-------------------------|-----------|-----------|---------------------|-----------|-----------|
+| Exp1       | 100               | 2,471                   | 39.3      | 19.0      | 16.8                | 15.7      | 9.3       |
+| Exp2       | 82                | 2,028                   | 37.5      | 19.8      | 17.3                | 15.1      | 10.2      |
+| Exp3       | 65                | 1,607                   | 46.9      | 19.9      | 19.6                | 7.2       | 6.5       |
 
-- Train deep learning models to predict self-reported race from whole-slide images
-- Evaluate baseline performance and identify confounding factors
+We generated three versions of the experimental dataset to systematically control for confounding factors:
 
-### Experiment 2: Dataset Curation Strategies
+- **Exp1 (Uncurated):** Included all available dermatopathology specimens and yielded the highest overall OvR AUC (0.702), with particularly strong performance in the Asian group (AUC = 0.795). This was attributed to a disproportionately high prevalence of hemorrhoid cases (61%) among Asian patients due to site-specific sampling biases (160 out of 312 Asian patients treated at one site).
+- **Exp2 (Balanced Disease):** Mitigated disease-related confounding by rebalancing hemorrhoid cases and removing conditions disproportionately prevalent in certain groups (e.g., gangrene, sun damage-related diagnoses, melanoma, basal cell carcinoma, squamous cell carcinoma, actinic keratosis, seborrheic keratosis), resulting in 2,028 patients (W 37.5%, B 19.8%, H/L 17.3%, A 15.1%, O 10.2%). This adjustment led to a decline in overall OvR AUC (0.671), with the Asian group experiencing the largest drop (AUC: 0.795 → 0.724).
+- **Exp3 (Strict ICD Code):** Further restricted the dataset to classical dermatopathology cases (ICD-10 codes L, C, D), fully removing hemorrhoids (ICD-10 K), and reducing the dataset to 1,607 patients (W 46.9%, B 19.9%, H/L 19.6%, A 7.2%, O 6.5%). This further reduced the overall OvR AUC to 0.663, with the Asian group showing the most pronounced decline (0.570), whereas the White group maintained consistently high performance (0.799).
 
-- Apply three curation strategies to control for confounders (e.g., site, diagnosis, technical artifacts)
-- Assess model performance for each strategy
-
-### Experiment 3: Attention-Based Morphological Analysis
-
-- Use attention-based mechanisms to identify race-associated morphological features
-- Analyze attention maps to localize predictive regions (e.g., epidermis)
-- Remove key regions and evaluate impact on model performance
+## Methods
 
 ### Slide Preprocessing
 
-- Standardize image formats and magnification
-- Quality control to filter out artifacts and ensure data integrity
-- Prepare slides for model training and analysis
+We standardized and prepared whole-slide images for model training using the script [`/data/make_features.py`](./data/make_features.py). The preprocessing workflow included:
 
-### Notes
+- **Format Standardization:** Converted slides to a consistent image format (TIFF) and standardized magnification to 20x.
+- **Quality Control:** Excluded slides with unreadable regions, excessive background, or scanning artifacts using automated heuristics.
+- **Tiling and Patch Extraction:** Divided each slide into non-overlapping 224x224 pixel tiles, filtering out tiles with low tissue content.
+- **Feature Extraction:** Used a pretrained encoder (e.g., ResNet50) to extract feature vectors from each tile for downstream analysis.
+- **Metadata Integration:** Linked extracted features to patient-level metadata for stratified experiments.
 
-- This codebase is designed for fairness and bias analysis in computational pathology
-- Data privacy is a priority; public release is planned pending approval
-- For questions or collaboration, please contact the repository maintainers
+To run the slide preprocessing on a Linux system, use the following example command:
+
+```bash
+python /data/make_features/make_features.py --meta_data_csv <meta_data.csv> --encoder <encoder_name> --tilesize 224 --bsize 512 --workers 8
+```
+
+- Replace `<meta_data.csv>` with your metadata filename. An example toy metadata file can be found at [`/data/self_reported_race/skin/master_metadata.csv`](./data/self_reported_race/skin/master_metadata.csv).
+
+The script outputs feature embeddings for each slide are saved under `<output_dir>/<encoder>/features/<slide_name>.pth`. Additionally, the corresponding tile coordinates are stored at `<output_dir>/<encoder>/coordinates/<slide_name>.csv`. 
+
+Alternatively, you can use feature embeddings generated from other preprocessing pipelines. We also recommend the [Trident pipeline](https://github.com/mahmoodlab/trident) for efficient and scalable whole-slide image preprocessing and feature extraction.
+

@@ -1,0 +1,6 @@
+MRN,accession_no,recv_date,division,barcode,slide,slide_path,race_curated,code,split
+1000001,MS-XX-00001,2025-01-01 10:00:00.000,SKIN,ABC123,slide1,/dummy/path/slide1.tiff,White,C00.000,train
+1000002,MS-XX-00002,2025-01-02 11:00:00.000,SKIN,DEF456,slide2,/dummy/path/slide2.tiff,Black,C00.001,val
+1000003,MS-XX-00003,2025-01-03 12:00:00.000,SKIN,GHI789,slide3,/dummy/path/slide3.tiff,Hispanic/Latino,C00.002,train
+1000004,MS-XX-00004,2025-01-04 13:00:00.000,SKIN,JKL012,slide4,/dummy/path/slide4.tiff,Asian,C00.003,val
+1000005,MS-XX-00005,2025-01-05 14:00:00.000,SKIN,MNO345,slide5,/dummy/path/slide5.tiff,Other,C00.004,train
