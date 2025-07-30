@@ -68,9 +68,99 @@ To run the slide preprocessing on a Linux system, use the following example comm
 python /data/make_features/make_features.py --meta_data_csv <meta_data.csv> --encoder <encoder_name> --tilesize 224 --bsize 512 --workers 8
 ```
 
+Encoders/FMs options: SP22M, UNI, GigaPath, and Virchow.
+
 - Replace `<meta_data.csv>` with your metadata filename. An example toy metadata file can be found at [`/data/self_reported_race/skin/master_metadata.csv`](./data/self_reported_race/skin/master_metadata.csv).
 
-The script outputs feature embeddings for each slide are saved under `<output_dir>/<encoder>/features/<slide_name>.pth`. Additionally, the corresponding tile coordinates are stored at `<output_dir>/<encoder>/coordinates/<slide_name>.csv`. 
+The script outputs feature embeddings for each slide are saved under `<output_dir>/<encoder>/features/<slide_name>.pth`. Additionally, the corresponding tile coordinates are stored at `<output_dir>/<encoder>/coordinates/<slide_name>.csv`.
 
 Alternatively, you can use feature embeddings generated from other preprocessing pipelines. We also recommend the [Trident pipeline](https://github.com/mahmoodlab/trident) for efficient and scalable whole-slide image preprocessing and feature extraction.
 
+### Model Learning: Attention-Based Multiple Instance Learning (AB-MIL)
+
+To train the model using the provided code, navigate to the `/slide_experiments/code/` directory and run the training script with your desired options. For example:
+
+```bash
+python train.py \
+    --output ./slide_experiments/skin/SP22M/exp1 \
+    --encoder SP22M \
+    --organ skin \
+    --aggregator GMA_multiple \
+    --data_version cohort_08_15_2024 \
+```
+
+- 'GMA_multiple' refers to a multi-head attention mechanism inspired by CLAM (see [Lu et al., 2021](https://www.nature.com/articles/s41551-020-00682-w)). This approach outputs distinct attention scores for each race group, enabling the model to learn group-specific representations by assigning separate attention weights to each demographic, which improves interpretability and fairness.
+
+Model Performance Report Across Three Dataset Curations:
+
+| Experiment | Encoder   | White | Black | Hispanic | Asian | Other | Overall AUC | Balanced Accuracy |
+|------------|-----------|-------|-------|----------|-------|-------|-------------|-------------------|
+| Exp1 (Uncurated) | SP22M     | 0.772 | 0.785 | 0.586    | 0.805 | 0.547 | 0.699       | 0.395             |
+|              | UNI       | 0.797 | 0.791 | 0.607    | 0.791 | 0.603 | **0.718**   | **0.400**         |
+|              | GigaPath  | 0.801 | 0.753 | 0.598    | 0.801 | 0.522 | 0.695       | 0.388             |
+|              | Virchow   | 0.784 | 0.749 | 0.591    | 0.783 | 0.579 | 0.697       | 0.392             |
+|              | **Average** | **0.789** | 0.770 | 0.596    | **0.795** | 0.563 | 0.702       | 0.394             |
+| Exp2 (Balanced Disease) | SP22M     | 0.744 | 0.751 | 0.569    | 0.701 | 0.577 | 0.668       | 0.368             |
+|              | UNI       | 0.760 | 0.773 | 0.560    | 0.715 | 0.569 | **0.676**   | **0.380**         |
+|              | GigaPath  | 0.734 | 0.739 | 0.581    | 0.753 | 0.559 | 0.673       | 0.372             |
+|              | Virchow   | 0.728 | 0.753 | 0.529    | 0.726 | 0.590 | 0.665       | 0.334             |
+|              | **Average** | **0.742** | **0.754** | 0.560    | 0.724 | 0.574 | 0.671       | 0.364             |
+| Exp3 (Strict ICD Code) | SP22M     | 0.788 | 0.773 | 0.584    | 0.481 | 0.534 | 0.632       | 0.287             |
+|              | UNI       | 0.819 | 0.766 | 0.654    | 0.556 | 0.594 | 0.678       | 0.296             |
+|              | GigaPath  | 0.791 | 0.766 | 0.664    | 0.650 | 0.431 | 0.661       | **0.333**         |
+|              | Virchow   | 0.796 | 0.742 | 0.656    | 0.592 | 0.613 | **0.680**   | 0.293             |
+|              | **Average** | **0.799** | **0.762** | 0.640    | 0.570 | 0.543 | 0.663       | 0.302             |
+
+*Model performance across three dataset curations. AUC is one-vs-all, accuracy is balanced accuracy.*
+
+### UMAP Visualizations
+
+We used a histomorphological phenotype learning (HPL) framework (see [Quiros et al., 2024](https://www.nature.com/articles/s41467-024-48666-7)) to analyze regions of high attention and visualize key tissue structures relevant to self-reported race prediction.
+
+#### Step 1: Prepare metadata and run dimensionality reduction (PCA+UMAP)
+
+First, generate the required metadata and UMAP/PCA features using:
+
+```bash
+python /data/Emb_Viz/prepare_meta_source.py \
+    --metadata_file /data/self_reported_race/skin/master_metadata.csv \
+    --coordinate_path <output_dir>/<encoder>/coordinates/ \
+    --embedding_path <output_dir>/<encoder>/features/ \
+    --output_path <output_dir>
+```
+
+- `<metadata.csv>`: Path to the main metadata file.
+- `<coordinate_dir>`: Directory containing tile coordinate CSVs.
+- `<embedding_dir>`: Directory containing tile feature .pth files.
+- `<output_directory>`: Directory to save processed metadata and features.
+
+#### Step 2: Generate UMAP plots in marimo notebook
+
+To generate the UMAP plots interactively, open the marimo notebook:
+
+```bash
+marimo run /data/Emb_Viz/tile_representation_umap.py
+```
+
+#### Step 3: KDE Plot Analysis
+
+```bash
+marimo run /data/Emb_Viz/attention_map_visualization.py
+```
+
+#### Step 4: Mosaic Plot of UMAP visualization
+
+#### Final Output of UMAP visualization
+
+![UMAP visualization of tile features and annotated tissue compartments](CPath_SAIF/figures/figure1_UMAP.png)
+
+### Attention Distribution Analysis
+
+![Whole-slide Attention Maps](CPath_SAIF/figures/figure2_case.png)
+
+![Whole-slide Attention Stratification Analysis](CPath_SAIF/figures/figure3_boxplots.png)
+
+## References
+
+1. Lu, M.Y., Williamson, D.F.K., Chen, T.Y. et al. Data-efficient and weakly supervised computational pathology on whole-slide images. Nat Biomed Eng 5, 555–570 (2021). https://doi.org/10.1038/s41551-020-00682-w
+2. Claudio Quiros, A., Coudray, N., Yeaton, A. et al. Mapping the landscape of histomorphological cancer phenotypes using self-supervised learning on unannotated pathology slides. Nat Commun 15, 4596 (2024). https://doi.org/10.1038/s41467-024-48666-7
