@@ -4,8 +4,8 @@ This repository contains code for investigating fairness and bias in computation
 
 This repository accompanies the following publication:
 
-- **Publication:** Accepted to the MICCAI Workshop on Fairness of AI in Medical Imaging (FAIMI), 2025.
-- **arXiv Link:** TBA
+- **Update (July 2025):** Accepted to the MICCAI Workshop on Fairness of AI in Medical Imaging (FAIMI), 2025.
+- **Paper Link:**[`Predict Patient Self-reported Race from Skin Histological Image`](https://arxiv.org/abs/2507.21912)
 
 ## Abstract
 
