@@ -58,9 +58,8 @@ We generated three versions of the experimental dataset to systematically contro
 We standardized and prepared whole-slide images for model training using the script [`/data/make_features.py`](./data/make_features.py). The preprocessing workflow included:
 
 - **Format Standardization:** Converted slides to a consistent image format (TIFF) and standardized magnification to 20x.
-- **Quality Control:** Excluded slides with unreadable regions, excessive background, or scanning artifacts using automated heuristics.
 - **Tiling and Patch Extraction:** Divided each slide into non-overlapping 224x224 pixel tiles, filtering out tiles with low tissue content.
-- **Feature Extraction:** Used a pretrained encoder (e.g., ResNet50) to extract feature vectors from each tile for downstream analysis.
+- **Feature Extraction:** Used a pretrained encoder (e.g., UNI, Virchow, Gigapath, SP22M, ...) to extract feature vectors from each tile for downstream analysis.
 - **Metadata Integration:** Linked extracted features to patient-level metadata for stratified experiments.
 
 To run the slide preprocessing on a Linux system, use the following example command:

@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=str, default='.', help='name of output directory')
 parser.add_argument('--checkpoint_path', default='', type=str, help='path to checkpoint')
 parser.add_argument('--encoder', type=str, default='', choices=[
-    'SP21M',
+    'SP22M',
     'SP85M',
     'uni',
     'virchow',
@@ -30,6 +30,7 @@ parser.add_argument('--encoder', type=str, default='', choices=[
 parser.add_argument('--aggregator', default='GMA', type=str, help='aggregator to use')
 #OPTIMIZATION PARAMS
 parser.add_argument('--data_version', required=True, type=str, help="The dataset version to use")
+parser.add_argument('--organ', required=True, type=str, help="Dataset Organ to use")
 parser.add_argument('--workers', default=10, type=int, help='number of data loading workers (default: 10)')
 
 
@@ -40,7 +41,7 @@ def main():
     args = parser.parse_args()
 
     # Set datasets
-    _, val_dset, _ = datasets.get_datasets(encoder=args.encoder, task='attention', data_version=args.data_version)
+    _, val_dset, _ = datasets.get_datasets(encoder=args.encoder, task='attention', data_version=args.data_version, organ=args.organ)
     val_loader = torch.utils.data.DataLoader(val_dset, batch_size=1, shuffle=False, num_workers=args.workers)
     
     # Dim of features
@@ -58,10 +59,12 @@ def main():
         args.ndim = 1536
     elif args.encoder == 'h-optimus-0':
         args.ndim = 1536
-    elif args.encoder == 'SP21M':
+    elif args.encoder == 'SP22M':
         args.ndim = 384
     elif args.encoder == 'SP85M':
         args.ndim = 768
+    else:
+        raise ("encoder is not available")
     
     # Get model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -97,6 +100,7 @@ def test(loader, model, device):
             input = input.squeeze(0).to(device)  # Shape: [num_tiles, feature_dim]
             target = loader.dataset.df.iloc[i]['target']
             slide = loader.dataset.df.iloc[i]['slide']
+            barcode = loader.dataset.df.iloc[i]['barcode']
 
             # Get attention scores
             attention_scores = model(input, attention_only=True)  # Shape: [1, num_tiles] or [5, num_tiles]
@@ -110,7 +114,7 @@ def test(loader, model, device):
             attention_scores_dict[slide] = attention_scores.T  # Shape: [num_tiles, 5]
 
             all_probs.append(probs)  # Slide-level probabilities
-            all_slide_info.append({'slide': slide, 'target': target})
+            all_slide_info.append({'slide': slide, 'target': target, 'barcode': barcode})
 
             print(f'Processed slide {i+1}/{len(loader)}')
 
