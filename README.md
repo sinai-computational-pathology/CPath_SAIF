@@ -149,16 +149,29 @@ marimo run /data/Emb_Viz/attention_map_visualization.py
 ```
 
 #### Step 4: Mosaic Plot of UMAP visualization
+To generate a mosaic plot of the UMAP visualization, run the following command:
+
+```bash
+python /EmbViz/plot_scatter_umap.py \
+    --data /EmbViz/marimo_metadata.csv \
+    --ncol 10 \ 
+    --nrow 10 \ 
+    --proj1 UMAP_D1 \
+    --proj2 UMAP_D2 \
+    --ncell 25
+```
+
+This will create a grid-based mosaic plot, displaying representative tiles in the UMAP embedding space for visual inspection of tissue morphology across demographic groups.
 
 #### Final Output of UMAP visualization
 
-![UMAP visualization of tile features and annotated tissue compartments](CPath_SAIF/figures/figure1_UMAP.png)
+![UMAP visualization of tile features and annotated tissue compartments](figures/figure1_UMAP.png)
 
 ### Attention Distribution Analysis
 
-![Whole-slide Attention Maps](CPath_SAIF/figures/figure2_case.png)
+![Whole-slide Attention Maps](figures/figure2_case.png)
 
-![Whole-slide Attention Stratification Analysis](CPath_SAIF/figures/figure3_boxplots.png)
+![Whole-slide Attention Stratification Analysis](figures/figure3_boxplots.png)
 
 ## References
 
