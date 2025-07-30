@@ -1,7 +1,7 @@
 # Project Overview
 This repository contains code for investigating fairness and bias in computational pathology (CPath) using artificial intelligence (AI). 
 
-![Project Overview](figures/DNA Day Poster 2025.jpg)
+![Project Overview](figures/Project_Poster.jpg)
 
 ## Predict Patient Self-reported Race from Skin Histological Image
 This project explores whether deep learning models can predict self-reported race from digitized dermatopathology slides and identifies potential morphological shortcuts. Our goal is to understand and mitigate unintended demographic biases in AI models for pathology.
