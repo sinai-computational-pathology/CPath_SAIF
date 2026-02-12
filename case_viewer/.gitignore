@@ -42,6 +42,10 @@ env/
 *.npy
 *.npz
 
+# Database and sensitive data directories
+data/
+demo_data/
+
 # Logs
 *.log
 
